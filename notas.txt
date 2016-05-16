@@ -1,0 +1,44 @@
+http://wiki.debian.org/OpenStackPuppetHowto
+
+
+
+
+
+Probamos en d3--trasteo:
+- instalar agente
+	apt-get install puppet augeas-tools 
+- configurar con Augeas
+	augtool << EOT
+set /files/etc/puppet/puppet.conf/agent/pluginsync true
+set /files/etc/puppet/puppet.conf/agent/server d1.ced.net
+save
+EOT
+- primera ejecutción: test=modo depuración (no daemon, verbose...)
+	# puppet agent --test
+	info: Creating a new SSL certificate request for d3.ced.net
+	info: Certificate Request fingerprint (md5): C5:92:AE:F8:E1:8D:D4:1B:AF:CD:4E:C2:58:77:C7:51
+	Exiting; no certificate found and waitforcert is disabled
+
+- en el master firmamos la solicitud
+	# puppet cert list
+	"d3.ced.net" (C5:92:AE:F8:E1:8D:D4:1B:AF:CD:4E:C2:58:77:C7:51)
+	# puppet cert sign d3.ced.net
+
+- confirmemos, de nuevo en el agente
+	# puppet agent --test
+	info: Caching certificate for d3.ced.net
+	info: Retrieving plugin
+	info: Caching certificate_revocation_list for ca
+	...
+
+
+
+
+Problema con el nombre DNS del cert del master. Seguimos http://docs.puppetlabs.com/guides/troubleshooting.html
+
+esanz@verne:/tmp/nagiosrep$ sudo puppet master --configprint certname,certdnsnames
+certdnsnames = 
+certname = verne.casa.net
+
+Borramos /var/lib/puppet/ssl/certs/verne.casa.net.pem
+
